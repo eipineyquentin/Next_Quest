@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: next-quest-site
+    ports:
+      - "3200:3200"
+    command: bash -lc "pip install -r requirements.txt && python app.py"
+    environment:
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-change-me}
+      - PORT=3200
+    volumes:
+      - .:/app
+    working_dir: /app
+    restart: unless-stopped
