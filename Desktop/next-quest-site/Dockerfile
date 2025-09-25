@@ -1,14 +1,15 @@
-# Use a lightweight Nginx image to serve static files
-FROM nginx:alpine
+FROM python:3.12-slim
 
-# Copy site files
-COPY . /usr/share/nginx/html
+ENV PYTHONDONTWRITEBYTECODE=1 \\
+    PYTHONUNBUFFERED=1
 
-# Remove default Nginx config
-RUN rm /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Copy our Nginx config
-COPY nginx.conf /etc/nginx/conf.d
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+COPY . /app/
+
+EXPOSE 3200
+
+CMD ["python", "app.py"]

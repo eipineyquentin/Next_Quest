@@ -62,28 +62,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const emailRaw = loginForm.querySelector('[name="email"]').value.trim();
       const password = loginForm.querySelector('[name="password"]').value;
       const email = emailRaw.toLowerCase();
-      if (!isValidEmail(email)) {
-        alert('Adresse e-mail invalide.');
-        return;
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) { throw new Error(data.error || 'Erreur de connexion'); }
+        auth.isAuthenticated = true;
+        auth.role = data.user.role;
+        auth.email = data.user.email;
+        auth.name = data.user.name;
+        saveAuth();
+        alert('Connecté en tant que ' + (auth.name || auth.email) + ' • ' + auth.role);
+        closeModal();
+        location.reload();
+      } catch (err) {
+        alert(err.message);
       }
-      const user = users[email];
-      if (!user) {
-        alert('Aucun compte trouvé pour cet e-mail.');
-        return;
-      }
-      const hash = await sha256(password);
-      if (user.passwordHash !== hash) {
-        alert('Mot de passe incorrect.');
-        return;
-      }
-      auth.isAuthenticated = true;
-      auth.role = user.role;
-      auth.email = user.email;
-      auth.name = user.name;
-      saveAuth();
-      alert('Connecté en tant que ' + (auth.name || auth.email) + ' • ' + auth.role);
-      closeModal();
-      location.reload();
     });
   }
   // Registration handler (auto-login after creation)
@@ -95,21 +92,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const password = registerForm.querySelector('[name="password"]').value;
       const role = registerForm.querySelector('[name="role"]').value || 'etudiant';
       const email = emailRaw.toLowerCase();
-      if (!name) { alert('Veuillez saisir un nom.'); return; }
-      if (!isValidEmail(email)) { alert('Adresse e-mail invalide.'); return; }
-      if (!password || password.length < 6) { alert('Mot de passe trop court (min. 6 caractères).'); return; }
-      if (users[email]) { alert('Un compte existe déjà avec cet e-mail.'); return; }
-      const passwordHash = await sha256(password);
-      users[email] = { name, email, passwordHash, role, createdAt: new Date().toISOString() };
-      saveUsers();
-      auth.isAuthenticated = true;
-      auth.role = role;
-      auth.email = email;
-      auth.name = name;
-      saveAuth();
-      alert('Compte créé et connecté avec succès.');
-      closeModal();
-      location.reload();
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password, role })
+        });
+        const data = await res.json();
+        if (!res.ok) { throw new Error(data.error || 'Erreur lors de l\'inscription'); }
+        auth.isAuthenticated = true;
+        auth.role = data.user.role;
+        auth.email = data.user.email;
+        auth.name = data.user.name;
+        saveAuth();
+        alert('Compte créé et connecté avec succès.');
+        closeModal();
+        location.reload();
+      } catch (err) {
+        alert(err.message);
+      }
     });
   }
 
